@@ -205,7 +205,7 @@
               $timestamp = strtotime($date);
               $day = date('D', $timestamp);
               if ($date == $today) {
-                echo '<th class="dateselect" id="s'.$date.'">'.$date.' <sub>TODAY'.$day.'</sub><div class="superscript">(Today)</div></th>';
+                echo '<th class="dateselect" id="s'.$date.'">'.$date.' <sub>'.$day.'</sub><div class="superscript">(Today)</div></th>';
 //                echo '<th class="dateselect" id="s'.$date.'">'.$date.' <sub>'.$day.' (Today)</sub></th>';
 //                echo '<th class="dateselect" id="s'.$date.'" bgcolor="LightGray">'.$date.' <sub>'.$day.'</sub></th>';
               }
