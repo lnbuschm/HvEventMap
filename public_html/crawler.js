@@ -11,7 +11,14 @@ var googleMapsClient = require('@google/maps').createClient({
   key: 'AIzaSyBR1wDAntcTEu-JnMcgTRKhaok46hdGD9o'
 });
 
-var DBNAME = "events" // hveventdb
+var DBNAME = "hveventdb" // hveventdb
+var con = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "hello123",
+  database: DBNAME
+});
+
 var MAX_PAGES_TO_VISIT = 10;
 var eventsFoundCount = 0;
 var eventCallbackCount = -1;
@@ -19,13 +26,6 @@ var eventCallbackCount = -1;
 var pagesVisited = {};
 var numPagesVisited = 0;
 var pagesToVisit = [];
-
-var con = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "hello123",
-  database: DBNAME
-});
 
 con.connect(function(err) {
   if (err) throw err;
@@ -130,7 +130,7 @@ function crawlHvOne() {
         }
         if (err == "timeout") {
           eventCallbackCount--;
-          console.log("Error geocoding: " + err + " Check quota at https://console.developers.google.com/google/maps-apis/apis/geocoding-backend.googleapis.com/quotas?project=pyeventmap&duration=PT1H ")
+          console.log("Error geocoding: " + err + ". Check quota at https://console.developers.google.com/google/maps-apis/apis/geocoding-backend.googleapis.com/quotas?project=pyeventmap&duration=PT1H ")
         } else if (err) {
           eventCallbackCount--;
           console.log("Error geocoding: " + err)
