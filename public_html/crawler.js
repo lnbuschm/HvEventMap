@@ -13,6 +13,8 @@ var googleMapsClient = require('@google/maps').createClient({
 
 var DBNAME = "events" // hveventdb
 var MAX_PAGES_TO_VISIT = 10;
+var eventsFoundCount = 0;
+var eventCallbackCount = -1;
 
 var pagesVisited = {};
 var numPagesVisited = 0;
@@ -52,11 +54,17 @@ function addEvent(date, time, title, description, location, lat, lng) {
   console.log("LAT: " + lat + ", LNG: " + lng);
   // TODO ::  If title exists already,  append date instead of inserting new entry
   var sql = "INSERT INTO " + DBNAME + " (date, time, title, description, location, lat, lng) VALUES ('" + mysql_real_escape_string(date) + "', '" + mysql_real_escape_string(time) + "', '" + mysql_real_escape_string(title) + "', '" + mysql_real_escape_string(description) + "', '" + mysql_real_escape_string(location) + "', " + lat + ", " + lng + ");";
-  console.log("SQL: " + sql);
+  //console.log("SQL: " + sql);
   con.query(sql, function(err, result) {
     if (err) throw err;
-    //  console.log("1 record inserted");
   });
+  console.log("EVENTS LEFT TO PROCESS: " + eventCallbackCount " OF " + eventsFoundCount);
+  eventCallbackCount--;
+  if (eventCallbackCount == 0) {
+    console.log('--------------------------------');
+    console.log("Done.  Exiting.");
+    process.exit();
+  }
 }
 
 function crawlHvOne() {
@@ -83,7 +91,7 @@ function crawlHvOne() {
     }
     // Parse the document body
     var $ = cheerio.load(body);
-    var eventCount = 0;
+    var eventsFoundCount = 0;
     var dateCount = 0;
     //   $('html > body > #page > #content > #primary > #main').find('div.'+SEARCH_DIV+' > p').each(function (index, element) {
     $('html > body > #page > #content > #primary > #main').find('div.entry-content').children().find('p').each(function(index, element) {
@@ -95,7 +103,6 @@ function crawlHvOne() {
           dateCount++;
         }
       }
-      eventCount++;
       eventhtml = $(element).html();
       eventtext = $(element).text();
       // console.log(eventhtml);
@@ -110,6 +117,7 @@ function crawlHvOne() {
         console.log(eventtext);
         return;
       }
+      eventsFoundCount++;
       console.log("LOCATION: " + location);
       var description = eventtext.substring(eventtext.indexOf(title) + title.length).split('\n')[0].trim();
       geocode_result = googleMapsClient.geocode({
@@ -121,8 +129,10 @@ function crawlHvOne() {
           addEvent(this.date, this.time, this.title, this.description, this.location, lat, lng);
         }
         if (err == "timeout") {
+          eventCallbackCount--;
           console.log("Error geocoding: " + err + " Check quota at https://console.developers.google.com/google/maps-apis/apis/geocoding-backend.googleapis.com/quotas?project=pyeventmap&duration=PT1H ")
         } else if (err) {
+          eventCallbackCount--;
           console.log("Error geocoding: " + err)
         }
       }.bind({
@@ -133,7 +143,8 @@ function crawlHvOne() {
         location: location
       }));
     });
-    console.log("Found " + eventCount + " events  on " + dateCount + " days")
+    eventCallbackCount = eventsFoundCount;
+    console.log("Found " + eventsFoundCount + " events  on " + dateCount + " days")
     return;
   });
 }
@@ -170,4 +181,3 @@ function mysql_real_escape_string(str) {
     }
   });
 }
-//  process.exit();
