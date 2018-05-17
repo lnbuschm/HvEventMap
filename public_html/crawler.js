@@ -11,7 +11,8 @@ var googleMapsClient = require('@google/maps').createClient({
   key: 'AIzaSyBR1wDAntcTEu-JnMcgTRKhaok46hdGD9o'
 });
 
-var DBNAME = "hveventdb" // hveventdb
+var DBNAME = "hveventdb";
+var DBTABLE = "events";
 var con = mysql.createConnection({
   host: "localhost",
   user: "root",
@@ -36,11 +37,11 @@ con.connect(function(err) {
 crawlHvOne();
 
 function clearEventDB() {
-  var sql = "TRUNCATE TABLE " + DBNAME + ";";
+  var sql = "TRUNCATE TABLE " + DBTABLE + ";";
   console.log("SQL: " + sql);
   con.query(sql, function(err, result) {
     if (err) throw err;
-    console.log("Cleared Databse: " + DBNAME);
+    console.log("Cleared table: " + DBTABLE);
   });
 }
 
@@ -53,12 +54,12 @@ function addEvent(date, time, title, description, location, lat, lng) {
   console.log("LOCATION: " + location);
   console.log("LAT: " + lat + ", LNG: " + lng);
   // TODO ::  If title exists already,  append date instead of inserting new entry
-  var sql = "INSERT INTO " + DBNAME + " (date, time, title, description, location, lat, lng) VALUES ('" + mysql_real_escape_string(date) + "', '" + mysql_real_escape_string(time) + "', '" + mysql_real_escape_string(title) + "', '" + mysql_real_escape_string(description) + "', '" + mysql_real_escape_string(location) + "', " + lat + ", " + lng + ");";
+  var sql = "INSERT INTO " + DBTABLE + " (date, time, title, description, location, lat, lng) VALUES ('" + mysql_real_escape_string(date) + "', '" + mysql_real_escape_string(time) + "', '" + mysql_real_escape_string(title) + "', '" + mysql_real_escape_string(description) + "', '" + mysql_real_escape_string(location) + "', " + lat + ", " + lng + ");";
   //console.log("SQL: " + sql);
   con.query(sql, function(err, result) {
     if (err) throw err;
   });
-  console.log("EVENTS LEFT TO PROCESS: " + eventCallbackCount " OF " + eventsFoundCount);
+  console.log("EVENTS LEFT TO PROCESS: " + eventCallbackCount + " OF " + eventsFoundCount);
   eventCallbackCount--;
   if (eventCallbackCount == 0) {
     console.log('--------------------------------');
@@ -91,7 +92,6 @@ function crawlHvOne() {
     }
     // Parse the document body
     var $ = cheerio.load(body);
-    var eventsFoundCount = 0;
     var dateCount = 0;
     //   $('html > body > #page > #content > #primary > #main').find('div.'+SEARCH_DIV+' > p').each(function (index, element) {
     $('html > body > #page > #content > #primary > #main').find('div.entry-content').children().find('p').each(function(index, element) {
