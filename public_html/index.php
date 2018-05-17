@@ -5,15 +5,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* Always set the map height explicitly to define the size of the div
-      * element that contains the map. */
-
-    #map {
-      height: 100%;
-    }
-
-    /* Optional: Makes the sample page fill the window. */
-
     html,
     body {
       height: 100%;
@@ -25,44 +16,6 @@
       width: 100%;
       height: 10%;
       text-align: center;
-    }
-
-    /* Create two equal columns that floats next to each other */
-
-    .column {
-      float: left;
-      width: 50%;
-      padding: 10px;
-    }
-
-    .left {
-      width: 25%;
-    }
-
-    .right {
-      width: 75%;
-    }
-
-    /* Clear floats after the columns */
-
-    .row:after {
-      content: "";
-      display: table;
-      clear: both;
-    }
-
-    /* Responsive layout - makes the two columns stack on top of each other instead of next to each other */
-
-    @media screen and (max-width: 600px) {
-      .column {
-        width: 100%;
-      }
-    }
-
-    #hide {
-      visibility: hidden;
-      display: none;
-      opacity: 0;
     }
 
     table,
@@ -78,16 +31,31 @@
       position: relative;
       /*left:2px; 
         top: -5px*/
-      bottom: 0.5em;
+      bottom: 0.3em;
       color: red;
-      font-size: 0.8em;
+      font-size: 0.6em;
     }
+
+    #map {
+      height: 90%;
+    }
+
+    .infowindow {
+      width:240px;
+      height:180px;
+    }
+
+    #hide {
+      visibility: hidden;
+      display: none;
+      opacity: 0;
+    }
+
   </style>
   <title>Hudson Valley Event Map</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-  <script type="text/javascript" src="date.js"></script>
   <script>
     var markers = [];
     var infowindows = [];
@@ -115,6 +83,7 @@
       var dateElements = document.querySelectorAll('.d' + date);
       var dateElementsTextArr = [];
       clearMarkers();
+      markerCount = 0;
       for (var i = 0; i < dateElements.length; i++) {
         //  Use | as delimiter between values,    ~  as delimiter between entries
         //   console.log('dateElements[i]: ', dateElements[i].innerText);
@@ -130,28 +99,30 @@
           var location = elems[3];
           var lat = parseFloat(elems[4]);
           var lng = parseFloat(elems[5]);
-          //          markers[j] = new google.maps.Marker({
-          markers[j] = new google.maps.Marker({
+          
+          markers[markerCount] = new google.maps.Marker({
             map: map,
             position: {
               lat: lat,
               lng: lng
             },
             title: title
-          });
-          var contentString = '<h1>(' + time + ') ' + title + '</h1><p>' + description + '</p><p><b>' + location + '</b></p>';
-          infowindows[j] = new google.maps.InfoWindow({
+          }); 
+          var contentString = '<div class="infowindow"><h2>' + title + '</br>(' + time +')</h2><p><b>' + location + '</b></p><p>' + description + '</p></div>';
+          infowindows[markerCount] = new google.maps.InfoWindow({
             content: contentString // description
           });
-          markers[j].addListener('click', function(j) {
-            if (infowindows[this.j].getMap()) {
-              infowindows[this.j].close(map, markers[this.j]);
+
+          markers[markerCount].addListener('click', function(markerCount) {
+            if (infowindows[this.markerCount].getMap()) {
+              infowindows[this.markerCount].close(map, markers[this.markerCount]);
             } else {
-              infowindows[this.j].open(map, markers[this.j]);
+              infowindows[this.markerCount].open(map, markers[this.markerCount]);
             }
           }.bind({
-            j: j
+            markerCount: markerCount
           }));
+          markerCount++;
         }
       }
     }
@@ -161,8 +132,7 @@
 <body>
   <?php
       if (!function_exists('mysqli_init') && !extension_loaded('mysqli')) {
-          //echo 'We don\'t have mysqli!!!';
-          exit("NO MYSQLI");
+          exit("Server Error: MYSQLI not found.  Please install");
       }
       $dateArray = [];
       $dbdata = [];
@@ -199,7 +169,7 @@
         <tr>
           <?php
             //  With too many buttons showing, the google map does not zoom and move correctly
-            $MAX_BUTTONS_TO_SHOW = 3;
+            $MAX_BUTTONS_TO_SHOW = 7;
             $today = date("Y-m-d");
             foreach ($dateArray as $index => $date) {
               $timestamp = strtotime($date);
@@ -241,15 +211,14 @@
       var map;
 
       function initMap() {
-        var homeLatLng = {
-          lat: 41.751293,
-          lng: -74.0857193
-        };
-        // Create a map object and specify the DOM element
-        // for display.
+        // Create a map object and specify the DOM element for display.
         map = new google.maps.Map(document.getElementById('map'), {
-          center: homeLatLng,
-          zoom: 10
+          center: {
+            lat: 41.739100,
+            lng: -74.050323
+          },
+          zoom: 10,
+          gestureHandling: 'greedy'
         });
       }
     </script>
