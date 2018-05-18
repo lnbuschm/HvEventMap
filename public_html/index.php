@@ -78,7 +78,7 @@
       clearMarkers();
       markers = [];
     }
-
+    var musicIcon = 'icons/music.png'; // https://icon-icons.com/icons2/643/PNG/32/music-note-circle-shape-brand_icon-icons.com_59304.png'; 
     function loadMap(date) {
       var dateElements = document.querySelectorAll('.d' + date);
       var dateElementsTextArr = [];
@@ -106,6 +106,7 @@
               lat: lat,
               lng: lng
             },
+           // icon: musicIcon,
             title: title
           }); 
           var contentString = '<div class="infowindow"><h2>' + title + '</br>(' + time +')</h2><p><b>' + location + '</b></p><p>' + description + '</p></div>';
@@ -130,28 +131,26 @@
 </head>
 
 <body>
-  <?php
+  <?php 
+         ini_set('display_errors', 'On'); 
+        error_reporting(E_ALL);
       if (!function_exists('mysqli_init') && !extension_loaded('mysqli')) {
           exit("Server Error: MYSQLI not found.  Please install");
       }
       $dateArray = [];
       $dbdata = [];
       // Need to run  "php -S localhost:8000"  from terminal to support php
-      $servername = "localhost";
-      $username = "webuser";
-      $password = "webpass";
-      $dbname = "events";
-      
+      $inicfg = parse_ini_file("../db.ini");
+
       // Create connection
-      $conn = new mysqli($servername, $username, $password, $dbname);
+      $conn = new mysqli($inicfg['servername'], $inicfg['username'], $inicfg['password'], $inicfg['db']);
       // Check connection
-      //echo "PHP STARTING"; 
       if ($conn->connect_error) {
           die("Connection failed: " . $conn->connect_error);
       } 
       $conn->set_charset("utf8");
 
-      $sql = "SELECT * FROM " . $dbname;
+      $sql = "SELECT * FROM " . $inicfg['table'];
       $result = $conn->query($sql);
 
       if ($result->num_rows > 0) {
@@ -160,9 +159,12 @@
             if(!in_array($row['date'], $dateArray)){
               array_push($dateArray,$row['date']);
               }
-
           }
+            usort($dateArray, "date_sort");
       } 
+      function date_sort($a, $b) {
+        return strtotime($a) - strtotime($b);
+      }
       ?>
     <div id="toprow">
       <table style="width:100%">
@@ -171,7 +173,10 @@
             //  With too many buttons showing, the google map does not zoom and move correctly
             $MAX_BUTTONS_TO_SHOW = 7;
             $today = date("Y-m-d");
+            $arr = array('11-01-2012', '01-01-2014', '01-01-2015', '09-02-2013', '01-01-2013');    
+
             foreach ($dateArray as $index => $date) {
+              if (date_sort($today, $date) > 0) continue;
               $timestamp = strtotime($date);
               $day = date('D', $timestamp);
               if ($date == $today) {
@@ -189,14 +194,11 @@
               var datebtns = document.getElementsByClassName("dateselect");
               Array.prototype.forEach.call(datebtns, function(datebtn) {
                 datebtn.addEventListener("click", function(dateclicked) {
-                    // alert("Clicked " + this.dateclicked);
-                    // reset all bgcolors to white
                     Array.prototype.forEach.call(datebtns, function(datebtn) {
-                      datebtn.style.backgroundColor = "white";
+                      datebtn.style.backgroundColor = "white";  // reset all bgcolors to white
                     })
                     document.getElementById("s" + this.dateclicked).style.backgroundColor = "lime";
                     loadMap(this.dateclicked);
-                    // alert("Clicked" + this.dateclicked);
                   }.bind({
                     dateclicked: datebtn.textContent.split(' ')[0]
                   })
@@ -228,7 +230,6 @@
             // output data of each row
             $prevdate = '';
             foreach($dbdata as $row) {
-            //while($row = $result->fetch_assoc()) {
               if ($prevdate == '') { echo '<div class="d'.$row['date'].'">'; }
               else if ($prevdate != $row['date']) {
                 echo '"</div>'.'<div class="d'.$row['date'].'">';
@@ -241,7 +242,7 @@
         } 
         ?>
     </div>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBR1wDAntcTEu-JnMcgTRKhaok46hdGD9o&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB_WHjYvTLQwOcmvb30qbkwp1jO-xPVySk&callback=initMap" async defer></script>
 </body>
 
 </html>
