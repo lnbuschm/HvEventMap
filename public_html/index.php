@@ -78,7 +78,8 @@
       clearMarkers();
       markers = [];
     }
-    var musicIcon = 'icons/music.png'; // https://icon-icons.com/icons2/643/PNG/32/music-note-circle-shape-brand_icon-icons.com_59304.png'; 
+    var musicIcon = 'icons/music-32.png'; // https://icon-icons.com/icons2/643/PNG/32/music-note-circle-shape-brand_icon-icons.com_59304.png'; 
+    var foodIcon = 'icons/food-32.png';
     function loadMap(date) {
       var dateElements = document.querySelectorAll('.d' + date);
       var dateElementsTextArr = [];
@@ -99,16 +100,20 @@
           var location = elems[3];
           var lat = parseFloat(elems[4]);
           var lng = parseFloat(elems[5]);
-          
+          var type = elems[6];
+          var icon = '';
+          if (type == 'music') icon = musicIcon;
+          //else if (type == 'food-drink') icon = foodIcon;  // food category isn't so great
           markers[markerCount] = new google.maps.Marker({
             map: map,
             position: {
               lat: lat,
               lng: lng
             },
-           // icon: musicIcon,
+            icon: icon,
             title: title
           }); 
+          
           var contentString = '<div class="infowindow"><h2>' + title + '</br>(' + time +')</h2><p><b>' + location + '</b></p><p>' + description + '</p></div>';
           infowindows[markerCount] = new google.maps.InfoWindow({
             content: contentString // description
@@ -235,7 +240,7 @@
                 echo '"</div>'.'<div class="d'.$row['date'].'">';
               }
               //  Use | as delimiter between values,    ~  as delimiter between entries
-                echo $row['time'].'|'.$row['title'].'|'.$row['description'].'|'.$row['location'].'|'.$row['lat'].'|'.$row['lng'].'~';
+                echo $row['time'].'|'.$row['title'].'|'.$row['description'].'|'.$row['location'].'|'.$row['lat'].'|'.$row['lng'].'|'.$row['type'].'~';
               $prevdate = $row['date'];
             }
             echo '</div>';

@@ -19,7 +19,7 @@ var con = mysql.createConnection({
   password: "hello123",
   database: DBNAME
 });
-
+var CLEAR_DB_ON_START = true;
 var MAX_PAGES_TO_VISIT = 10;
 var eventsFoundCount = 0;
 var eventCallbackCount = -1;
@@ -31,10 +31,14 @@ var pagesToVisit = [];
 con.connect(function(err) {
   if (err) throw err;
   console.log("Connected to DB: " + DBNAME);
-  clearEventDB();
+  if (CLEAR_DB_ON_START) clearEventDB();
 });
 
 crawlHvOne();
+//crawlHvOneCategory("https://calendar.hudsonvalleyone.com/events/category/music/", 'music', MAX_PAGES_TO_VISIT);
+//crawlHvOneCategory("https://calendar.hudsonvalleyone.com/events/category/food-drink/", 'food-drink', MAX_PAGES_TO_VISIT);
+//crawlHvOneCategory("https://calendar.hudsonvalleyone.com/events/category/kids-family/", 'kids-family', MAX_PAGES_TO_VISIT);
+//crawlHvOneCategory("https://calendar.hudsonvalleyone.com/events/category/arts-entertainment/", 'arts-entertainment', MAX_PAGES_TO_VISIT);
 
 function clearEventDB() {
   var sql = "TRUNCATE TABLE " + DBTABLE + ";";
@@ -66,6 +70,44 @@ function addEvent(date, time, title, description, location, lat, lng) {
     console.log("Done.  Exiting.");
     process.exit();
   }
+}
+
+var pageVisitCounter = 1;
+function crawlHvOneCategory(PAGE_URL, CATEGORY_TYPE, VISITCOUNTER) {
+  console.log("Visiting " + CATEGORY_TYPE + " page #" + VISITCOUNTER + ": " + PAGE_URL);
+
+  request(PAGE_URL, function(error, response, body) {
+    // Check status code (200 is HTTP OK)
+    if (response.statusCode !== 200) {
+      console.log(" Incorrect status. Exiting.");
+      return;
+    }
+    var $ = cheerio.load(body);
+    $('html > body > #page > #content > #primary > #main').find('a.tribe-event-url').each(function(index, element) {
+      eventtitle = $(element).text();
+      eventtitle = eventtitle.replace(/[\n\t\r]/g, "");
+    //  console.log(eventtext);
+   //   UPDATE table1 dest, (SELECT * FROM table2 where id=x) src 
+   //   SET dest.col1 = src.col1 WHERE dest.id=x 
+      var sql = "UPDATE " + DBTABLE + " dest, (SELECT * FROM " + DBTABLE + " WHERE title = '" + mysql_real_escape_string(eventtitle) + "') src SET dest.type='" + CATEGORY_TYPE + "' where dest.title='" + mysql_real_escape_string(eventtitle) + "';";
+   //   var sql = "SELECT * FROM " + DBTABLE + " WHERE title = '" + mysql_real_escape_string(eventtitle) + "';";
+   //   console.log("SQL: " + sql);
+      con.query(sql, function(err, result) {
+   //     console.log(result);
+        if (err) throw err;
+      });
+    });
+
+    $('html > body > #page > #content > #primary > #main').find('#tribe-events-footer ul li a').each(function(index, element) {
+      if ($(element).attr('rel') == 'prev') return;
+      var nextpage = $(element).attr('href');
+      if (VISITCOUNTER > 0) crawlHvOneCategory(nextpage, CATEGORY_TYPE, VISITCOUNTER-1);
+      else console.log("VISITED " + MAX_PAGES_TO_VISIT + " " + CATEGORY_TYPE + " PAGES.... DONE.")
+    });
+  //  process.exit();
+  });
+  
+  
 }
 
 function crawlHvOne() {
