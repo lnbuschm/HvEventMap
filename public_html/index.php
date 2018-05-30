@@ -173,10 +173,14 @@
               array_push($dateArray,$row['date']);
               }
           }
-            usort($dateArray, "date_sort");
+          usort($dateArray, "date_sort");
+          usort($dbdata, "db_sort");
       } 
       function date_sort($a, $b) {
         return strtotime($a) - strtotime($b);
+      }
+      function db_sort($a, $b) {
+        return strtotime($a['date']) - strtotime($b['date']);
       }
       ?>
     <div id="toprow">
@@ -184,11 +188,15 @@
         <tr>
           <?php
             //  With too many buttons showing, the google map does not zoom and move correctly
-            $MAX_BUTTONS_TO_SHOW = 7;
+            $MAX_DATES_TO_SHOW = 7;
             $today = date("Y-m-d");  
+            $todayTimestamp = strtotime($today);
+            $maxDate = date('Y-m-d', strtotime($today. ' + '.$MAX_DATES_TO_SHOW.' days'));
+            $maxDateTimestamp = strtotime($maxDate);
 
             foreach ($dateArray as $index => $date) {
-              if (date_sort($today, $date) > 0) continue;
+              if (date_sort($today, $date) > 0) continue; // remove previous dates
+              if (date_sort($date, $maxDate) > 0) continue; // remove future dates beyond limit
               $dateArr = explode('-', $date);
               $shortdate = $dateArr[1]."/".$dateArr[2];
               $timestamp = strtotime($date);
@@ -199,11 +207,12 @@
 //                echo '<th class="dateselect" id="s'.$date.'">'.$date.' <sub>'.$day.' (Today)</sub></th>';
 //                echo '<th class="dateselect" id="s'.$date.'" bgcolor="LightGray">'.$date.' <sub>'.$day.'</sub></th>';
               }
-              else if ($index < $MAX_BUTTONS_TO_SHOW) {
+           //   else if ($index < $MAX_DATES_TO_SHOW) {
+              else {
                 echo '<th class="dateselect" id="s'.$date.'">'.$shortdate.'</br>'.$day.'</th>';
-//                echo '<th class="dateselect" id="s'.$date.'">'.$shortdate.'<sub> '.$day.'</sub></th>';
-//                echo '<th class="dateselect" id="s'.$date.'">'.$shortdate.'<sub> '.$day.'</sub></th>';
               }
+//                echo '<th class="dateselect" id="s'.$date.'">'.$shortdate.'<sub> '.$day.'</sub></th>';
+//                echo '<th class="dateselect" id="s'.$date.'">'.$shortdate.'<sub> '.$day.'</sub></th>';
             }
 
             ?>
@@ -259,7 +268,12 @@
         if (count($dbdata) > 0) {
             // output data of each row
             $prevdate = '';
+
             foreach($dbdata as $row) {
+              if (($todayTimestamp > strtotime($row['date'])) || (strtotime($row['date']) > $maxDateTimestamp)) {
+                continue;
+              }
+
               if ($prevdate == '') { echo '<div class="d'.$row['date'].'">'; }
               else if ($prevdate != $row['date']) {
                 echo '"</div>'.'<div class="d'.$row['date'].'">';
